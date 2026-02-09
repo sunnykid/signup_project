@@ -1,3 +1,8 @@
+let redisStatus = {
+  connected: false,
+  reportedDown: false,
+};
+
 require("dotenv").config();
 
 const path = require("path");
@@ -108,7 +113,7 @@ redisClient = redis.createClient({
   },
 });
   // Redis 에러로 서버가 죽으면 안 됨(옵셔널)
-  let lastErrAt = 0;
+/*  let lastErrAt = 0;
   redisClient.on("error", (err) => {
     const now = Date.now();
     if (now - lastErrAt > 10_000) {
@@ -116,7 +121,29 @@ redisClient = redis.createClient({
       lastErrAt = now;
     }
   });
+i*/
+  let redisState = "unknown";
+  redisClient.on("ready", () => {
+  if (redisState !== "up") {
+    console.log("[REDIS] connected");
+    redisState = "up";
+  }
+});
 
+redisClient.on("error", (err) => {
+  // error는 여러 번 발생하므로 상태 전이일 때만 로그
+  if (redisState !== "down") {
+    console.error("[REDIS] connection lost → fallback to MySQL");
+    redisState = "down";
+  }
+});
+
+redisClient.on("reconnecting", () => {
+  // 로그는 굳이 안 찍어도 됨 (노이즈)
+});
+
+  // error는 end 전에 여러 번 올 수 있으므로
+  // 실제 로그는 end 이벤트에서만 남김
   redisClient.connect()
     .then(() => console.log("[BOOT] Redis connected"))
     .catch((err) => console.error("[BOOT] Redis connect failed (fallback mode):", err.code || err.message));

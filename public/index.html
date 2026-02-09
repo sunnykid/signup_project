@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Auth Lab</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="header">
+    <h1>Auth Lab: Redis 자동 폴백 + PostgreSQL(JSONB) 이벤트 로그</h1>
+    <div class="sub">
+      세션은 Redis 우선, Redis 장애 시 MySQL로 자동 폴백. 이벤트는 PostgreSQL JSONB로 저장/분석.
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="card">
+      <h2>회원가입</h2>
+      <form id="formSignup" class="stack">
+        <input name="email" placeholder="email" required />
+        <input name="password" type="password" placeholder="password" required />
+        <button type="submit">Signup</button>
+      </form>
+      <pre id="outSignup" class="pre"></pre>
+    </section>
+
+    <section class="card">
+      <h2>로그인 / 인증</h2>
+      <form id="formLogin" class="stack">
+        <input name="email" placeholder="email" required />
+        <input name="password" type="password" placeholder="password" required />
+        <button type="submit">Login</button>
+      </form>
+
+      <div class="row">
+        <button id="btnMe" type="button">/me 조회</button>
+        <button id="btnLogout" type="button">Logout</button>
+      </div>
+
+      <div class="hint">* 토큰은 브라우저 localStorage에 저장됩니다.</div>
+      <pre id="outLogin" class="pre"></pre>
+    </section>
+
+    <section class="card wide">
+      <h2>PostgreSQL 이벤트 로그/분석(체감)</h2>
+
+      <div class="row">
+        <button id="btnEvents" type="button">최근 이벤트 50개</button>
+        <button id="btnStats" type="button">이벤트 통계(60분)</button>
+      </div>
+
+      <div class="row">
+        <input id="searchKey" placeholder="payload key 예: reason" />
+        <input id="searchValue" placeholder="value 예: bad_password" />
+        <button id="btnSearch" type="button">JSONB 검색</button>
+      </div>
+
+      <pre id="outEvents" class="pre"></pre>
+    </section>
+
+    <section class="card wide">
+      <h2>운영 확인 포인트</h2>
+      <ul>
+        <li><b>Redis 정상</b>: <code>redis-cli keys "sess:*"</code>로 세션 존재 확인</li>
+        <li><b>Redis 다운</b>: <code>sudo systemctl stop redis-server</code> 후에도 <code>/me</code>가 되면 폴백 성공</li>
+        <li><b>MySQL 세션</b>: <code>SELECT token, expires_at FROM sessions ORDER BY created_at DESC;</code></li>
+        <li><b>PostgreSQL 이벤트</b>: <code>SELECT event_type, count(*) FROM auth_events GROUP BY event_type;</code></li>
+      </ul>
+      <pre id="outInfo" class="pre"></pre>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
